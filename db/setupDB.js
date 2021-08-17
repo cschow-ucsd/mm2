@@ -30,7 +30,7 @@ function setupDB() { //TODO: set to endpoint using env (not localhost)
         else console.log('Created table. Table description JSON:', JSON.stringify(data, null, 2))
     })
 
-    return tableName
+    return { tableName, docClient: new AWS.DynamoDB.DocumentClient() }
 }
 
-module.exports = setupDB
+module.exports = { setupDB }

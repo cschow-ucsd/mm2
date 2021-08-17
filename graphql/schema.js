@@ -6,17 +6,16 @@ const {
     GraphQLList,
     GraphQLNonNull,
 } = require('graphql')
-const ScheduleType = require('./ScheduleType')
-const AWS = require('aws-sdk')
-const setupDB = require('../db/setupDB')
 
+const { ScheduleType, IdType } = require('./CustomObjectTypes')
+const { setupDB } = require('../db/setupDB')
+const { getSchedule, getSchedules, createSchedule, deleteSchedule } = require('../db/queries')
 
 // create table and client
-const tableName = setupDB()
-const docClient = new AWS.DynamoDB.DocumentClient()
+const { tableName, docClient } = setupDB()
 
-const RootQuery = new GraphQLObjectType({
-    name: 'RootQueryType',
+const query = new GraphQLObjectType({
+    name: 'ScheduleQuery',
     fields: {
         schedule: {
             type: ScheduleType,
@@ -25,7 +24,7 @@ const RootQuery = new GraphQLObjectType({
                 id: { type: GraphQLString }
             },
             async resolve(parentValue, args) {
-                const data = await getSchedule(args.user, args.id)
+                const data = await getSchedule(tableName, docClient, args.user, args.id)
                 return data.Item
             }
         },
@@ -35,7 +34,7 @@ const RootQuery = new GraphQLObjectType({
                 user: { type: GraphQLString },
             },
             async resolve(parentValue, args) {
-                const data = await getSchedules(args.user)
+                const data = await getSchedules(tableName, docClient, args.user)
                 return data.Items
             }
         }
@@ -43,24 +42,31 @@ const RootQuery = new GraphQLObjectType({
 
 })
 
-function getSchedule(user, id) {
-    const params = {
-        TableName: tableName,
-        Key: { user, id }
+const mutation = new GraphQLObjectType({
+    name: 'ScheduleMutation',
+    fields: {
+        createSchedule: {
+            type: IdType,
+            args: {
+                user: { type: new GraphQLNonNull(GraphQLString) }
+            },
+            async resolve(parentValue, args) {
+                const [id] = await createSchedule(tableName, docClient, args.user)
+                return { id }
+            }
+        },
+        deleteSchedule: {
+            type: ScheduleType,
+            args: {
+                user: { type: GraphQLString },
+                id: { type: GraphQLString }
+            },
+            async resolve(parentValue, args) {
+                const data = await deleteSchedule(tableName, docClient, args.user, args.id)
+                return data.Attributes
+            }
+        }
     }
-    return docClient.get(params).promise()
-}
-
-function getSchedules(user) {
-    const params = {
-        TableName: tableName,
-        KeyConditionExpression: '#user = :user',
-        ExpressionAttributeNames: { '#user': 'user'},
-        ExpressionAttributeValues: { ':user': user}
-    }
-    return docClient.query(params).promise()
-}
-
-module.exports = new GraphQLSchema({
-    query: RootQuery
 })
+
+module.exports = new GraphQLSchema({ query, mutation })
