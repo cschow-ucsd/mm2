@@ -32,8 +32,6 @@ ALL_SCHEDULES.forEach(schedule => {
     const params = {
         TableName: 'Schedules',
         Item: {
-            'user_pk': schedule.user,
-            'id_sk': schedule.id,
             'user': schedule.user,
             'id': schedule.id
         }
