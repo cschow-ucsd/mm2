@@ -1,0 +1,25 @@
+{
+  "name": "mm2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently npm:server npm:db-local",
+    "server": "nodemon server.js",
+    "db-local": "java -Djava.library.path=./db/local/DynamoDBLocal_lib -jar db/local/DynamoDBLocal.jar -inMemory",
+    "load-test-data": "node ./db/local/LoadTestData.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.969.0",
+    "express": "^4.17.1",
+    "express-graphql": "^0.12.0",
+    "graphql": "^15.5.1",
+    "install": "^0.13.0",
+    "nodemon": "^2.0.12"
+  },
+  "devDependencies": {
+    "concurrently": "^6.2.1"
+  }
+}
